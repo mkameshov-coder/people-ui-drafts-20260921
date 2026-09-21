@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Люди · Picker + feed</title>
+<style>
+:root{
+  --bg:#f7f6f4; --card:#fff; --ink:#1c1a19; --ink2:#57514e;
+  --line:#e4dfdb; --accent:#902A35; --accent-soft:#f3e9ea;
+  --ok:#2f6b3a; --muted:#efebe8; --tg:#229ED9; --wa:#25D366; --max:#6B4EFF;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;cursor:pointer}
+a{color:var(--accent);text-decoration:none}
+.app{min-height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;background:var(--bg);
+  padding-bottom:var(--safe-bottom)}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(247,246,244,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:calc(10px + var(--safe-top)) 14px 10px;display:flex;align-items:center;gap:10px;min-height:52px}
+.topbar h1{font-size:18px;margin:0;flex:1;line-height:1.2}
+.back,.iconbtn{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--accent);
+  display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:0 8px;font-size:18px;font-weight:600}
+.iconbtn:active,.back:active,.person:active,.chip:active,.segbtn:active,.hub a:active{opacity:.7}
+.hub-link{font-size:13px;color:var(--ink2);min-height:44px;display:inline-flex;align-items:center;padding:0 6px}
+.list{padding:10px 12px 24px;display:flex;flex-direction:column;gap:8px}
+.person{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);
+  background:var(--card);border-radius:14px;padding:12px 14px;min-height:64px;color:inherit}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.person .meta{flex:1;min-width:0}
+.person .name{font-weight:650;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person .sub{color:var(--ink2);font-size:13px;margin-top:2px}
+.chev{color:#b0a9a4;font-size:20px}
+.badge{font-size:12px;background:var(--muted);color:var(--ink2);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.screen{display:none;flex:1;flex-direction:column;min-height:0}
+.screen.on{display:flex}
+.detail-body{padding:12px 14px 28px;overflow:auto;-webkit-overflow-scrolling:touch}
+.section-title{font-size:13px;color:var(--ink2);font-weight:600;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+.channel{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px;margin:0 0 8px;min-height:52px}
+.ch-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ch-dot.Telegram{background:var(--tg)}.ch-dot.WhatsApp{background:var(--wa)}.ch-dot.MAX{background:var(--max)}
+.ch-name{flex:1;font-weight:600}.ch-count{color:var(--ink2);font-size:14px;margin-right:6px}
+.unlink{min-height:44px;min-width:88px;border:1px solid #e0c4c8;background:#fff;color:var(--accent);
+  border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 8px}
+.msg .row{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.msg .ch{font-size:12px;font-weight:700;color:var(--accent)}.msg .t{font-size:12px;color:var(--ink2)}
+.msg .txt{font-size:15px}
+.sheet-backdrop{position:fixed;inset:0;background:rgba(28,26,25,.35);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.sheet-backdrop.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;
+  background:var(--card);border-radius:18px 18px 0 0;max-height:88vh;transform:translateY(110%);
+  transition:transform .25s ease;display:flex;flex-direction:column;padding-bottom:var(--safe-bottom);box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.sheet.on{transform:translateY(0)}
+.handle{width:40px;height:5px;border-radius:3px;background:#d5cfc9;margin:10px auto 6px}
+.sheet .sheet-head{padding:4px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.sheet .sheet-body{padding:12px 14px;overflow:auto;-webkit-overflow-scrolling:touch;flex:1}
+.acc-item{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 8px;overflow:hidden}
+.acc-head{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:64px;border:0;background:transparent;text-align:left;color:inherit}
+.acc-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
+.acc-item.open .acc-body{display:block}
+.acc-item.open .acc-head{background:var(--accent-soft)}
+.segs{display:flex;gap:4px;background:var(--muted);border-radius:12px;padding:4px;margin:12px 14px}
+.segbtn{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font-weight:600}
+.segbtn.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chips{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px 8px 8px;
+  border-radius:999px;border:1px solid var(--line);background:var(--card);color:inherit;font-weight:600}
+.chip .av{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.ch-strip{display:flex;gap:8px;overflow-x:auto;padding:0 12px 10px;scrollbar-width:none}
+.ch-strip::-webkit-scrollbar{display:none}
+.ch-pill{flex-shrink:0;min-height:40px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);font-size:13px;font-weight:600;color:var(--ink2)}
+.ch-pill strong{color:var(--ink);margin-left:4px}
+.stack-card{flex:1;margin:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;
+  display:flex;flex-direction:column;overflow:hidden;min-height:0;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.stack-nav{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.stack-nav button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--muted);
+  color:var(--ink);font-weight:650}
+.stack-nav button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.empty{color:var(--ink2);padding:20px;text-align:center}
+.hub{padding:20px 16px 40px;max-width:480px;margin:0 auto}
+.hub h1{font-size:22px;margin:0 0 6px}
+.hub .lead{color:var(--ink2);margin:0 0 20px;font-size:15px}
+.hub a{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 16px;margin:0 0 10px;min-height:72px;color:inherit}
+.hub a strong{display:block;font-size:17px;color:var(--accent);margin-bottom:4px}
+.hub a span{color:var(--ink2);font-size:14px;line-height:1.35}
+.phone-hint{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:650;
+  font-size:13px;padding:8px 12px;border-radius:10px;margin:0 0 18px}
+@media(min-width:721px){
+  .app,.hub{box-shadow:0 0 0 1px var(--line)}
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <h1>Люди</h1>
+    <a class="hub-link" href="index.html">все</a>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="ch-strip" id="chStrip"></div>
+  <div class="detail-body" id="feed" style="padding-top:0;flex:1"></div>
+</div>
+
+<script>
+const PEOPLE = [
+  {
+    id: 'antonina',
+    name: 'Антонина Саганова',
+    role: 'продажи',
+    meta: '2 диал · 7139',
+    initials: 'АС',
+    channels: [
+      {kind:'Telegram', count:7021, status:'on'},
+      {kind:'WhatsApp', count:86, status:'on'},
+      {kind:'MAX', count:32, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'21:14', text:'Клиент по ЖК Томилино: ждёт смету до среды'},
+      {ch:'WhatsApp', t:'19:02', text:'Переслала фото кухни — уточните цвет фасадов'},
+      {ch:'MAX', t:'17:40', text:'Напоминание: созвон с Бахой в 11:00'},
+      {ch:'Telegram', t:'15:18', text:'Акт по Лесной 13 подписан, можно закрывать'},
+      {ch:'WhatsApp', t:'12:05', text:'Новый лид с Авито — 2к кухня+санузел'}
+    ]
+  },
+  {
+    id: 'baha',
+    name: 'Баха Маляр',
+    role: 'маляр',
+    meta: '1 диал · 420',
+    initials: 'БМ',
+    channels: [
+      {kind:'Telegram', count:318, status:'on'},
+      {kind:'WhatsApp', count:102, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'20:51', text:'Завтра начинаем шпаклёвку в зале, нужны маяки'},
+      {ch:'WhatsApp', t:'18:30', text:'Фото стен до — отправил в чат объекта'},
+      {ch:'Telegram', t:'14:12', text:'Кирилл, где грунт? На объекте пусто'}
+    ]
+  },
+  {
+    id: 'rinal',
+    name: 'Риналь От Евгения',
+    role: 'подряд',
+    meta: '3 диал · 891',
+    initials: 'РО',
+    channels: [
+      {kind:'Telegram', count:640, status:'on'},
+      {kind:'WhatsApp', count:251, status:'on'},
+      {kind:'MAX', count:0, status:'off'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'22:01', text:'Евгений подтвердил замер на пятницу'},
+      {ch:'WhatsApp', t:'16:44', text:'Счёт за доставку гипсокартона — в почте'},
+      {ch:'Telegram', t:'11:20', text:'Нужен доступ на объект с 8:00'}
+    ]
+  },
+  {
+    id: 'anton',
+    name: 'Антон Ильин',
+    role: 'дизайнер',
+    meta: '4 диал · 1560',
+    initials: 'АИ',
+    channels: [
+      {kind:'Telegram', count:1204, status:'on'},
+      {kind:'WhatsApp', count:356, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'21:33', text:'Обновил планировку v3 — ссылка в Notion'},
+      {ch:'WhatsApp', t:'19:10', text:'Клиент выбрал плитку Cersanit, артикул в файле'},
+      {ch:'Telegram', t:'13:55', text:'Нужна правка освещения в спальне'}
+    ]
+  },
+  {
+    id: 'kirill',
+    name: 'Кирилл Свинарёв',
+    role: 'прораб',
+    meta: '5 диал · 2340',
+    initials: 'КС',
+    channels: [
+      {kind:'Telegram', count:1890, status:'on'},
+      {kind:'WhatsApp', count:450, status:'on'},
+      {kind:'MAX', count:12, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'22:18', text:'Завтра бригада на объекте с 8:30, ключи у охраны'},
+      {ch:'WhatsApp', t:'20:05', text:'Фиксация: электрика затянута до пятницы'},
+      {ch:'MAX', t:'17:22', text:'Проверка бетона — ок, можно плитку'},
+      {ch:'Telegram', t:'09:40', text:'Где акт скрытых работ по полу?'}
+    ]
+  },
+  {
+    id: 'yulia',
+    name: 'Юлия Головина',
+    role: 'бухгалтер',
+    meta: '2 диал · 980',
+    initials: 'ЮГ',
+    channels: [
+      {kind:'Telegram', count:720, status:'on'},
+      {kind:'WhatsApp', count:260, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'18:50', text:'УПД по ЖК отправлены в СБИС'},
+      {ch:'WhatsApp', t:'15:15', text:'Нужен скан паспорта контрагента для 1С'},
+      {ch:'Telegram', t:'10:02', text:'Сверка за август — расхождение 12 400 ₽'}
+    ]
+  },
+  {
+    id: 'alena',
+    name: 'Алёна',
+    role: 'менеджер',
+    meta: '3 диал · 1120',
+    initials: 'АМ',
+    channels: [
+      {kind:'Telegram', count:880, status:'on'},
+      {kind:'WhatsApp', count:210, status:'on'},
+      {kind:'MAX', count:30, status:'on'}
+    ],
+    feed: [
+      {ch:'Telegram', t:'21:05', text:'Согласовала график замеров на неделю'},
+      {ch:'WhatsApp', t:'16:28', text:'Клиент просит скидку 5% — нужен ответ Максима'},
+      {ch:'MAX', t:'12:11', text:'Напоминание: КП по Лесной до завтра'}
+    ]
+  }
+];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function unlink(kind){alert('Отвязать «'+kind+'» — заглушка прототипа');}
+function channelsHTML(p){
+  if(!p.channels.length) return '<div class="empty">Нет каналов</div>';
+  return p.channels.map(c=>`
+    <div class="channel">
+      <span class="ch-dot ${esc(c.kind)}"></span>
+      <span class="ch-name">${esc(c.kind)}</span>
+      <span class="ch-count">${c.count}</span>
+      <button type="button" class="unlink" onclick="unlink('${esc(c.kind)}')">Отвязать</button>
+    </div>`).join('');
+}
+function feedHTML(p, limit){
+  const items = limit ? p.feed.slice(0,limit) : p.feed;
+  if(!items.length) return '<div class="empty">Лента пуста</div>';
+  return items.map(m=>`
+    <div class="msg">
+      <div class="row"><span class="ch">${esc(m.ch)}</span><span class="t">${esc(m.t)} МСК</span></div>
+      <div class="txt">${esc(m.text)}</div>
+    </div>`).join('');
+}
+function avatarHTML(p, cls){return `<div class="avatar ${cls||''}">${esc(p.initials)}</div>`;}
+
+let currentId = PEOPLE[0].id;
+const chips=document.getElementById('chips');
+const chStrip=document.getElementById('chStrip');
+const feed=document.getElementById('feed');
+
+function render(){
+  const p = PEOPLE.find(x=>x.id===currentId);
+  chips.innerHTML = PEOPLE.map(x=>`
+    <button type="button" class="chip ${x.id===currentId?'on':''}" data-id="${x.id}">
+      <span class="av">${esc(x.initials)}</span>${esc(x.name.split(' ')[0])}
+    </button>`).join('');
+  chStrip.innerHTML = p.channels.map(c=>`
+    <span class="ch-pill"><span class="ch-dot ${esc(c.kind)}" style="display:inline-block;margin-right:6px;vertical-align:middle"></span>${esc(c.kind)}<strong>${c.count}</strong>
+    <button type="button" class="unlink" style="min-width:auto;margin-left:8px;min-height:36px;padding:4px 10px;font-size:12px" onclick="unlink('${esc(c.kind)}')">Отвязать</button>
+    </span>`).join('') || '<span class="empty">Нет каналов</span>';
+  feed.innerHTML = `
+    <div style="padding:0 0 8px;color:var(--ink2);font-size:13px">${esc(p.name)} · ${esc(p.role)} · ${esc(p.meta)}</div>
+    ${feedHTML(p)}`;
+}
+chips.addEventListener('click',e=>{
+  const b=e.target.closest('.chip');
+  if(!b) return;
+  currentId=b.dataset.id;
+  render();
+});
+render();
+
+</script>
+</body>
+</html>
